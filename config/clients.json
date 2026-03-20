@@ -1,0 +1,12 @@
+[
+  {
+    "clientID": "internal-emr",
+    "name": "Internal EMR",
+    "description": "Default client representing an internal Electronic Medical Record system. Uses basic-auth credentials to send FHIR transactions through the OpenHIM gateway.",
+    "roles": ["internal-emr"],
+    "passwordAlgorithm": "sha512",
+    "passwordHash": "6b522b011e3dda3bc0eb7a947e1ee4c3c45e43bb946ba427be49e74a0d1d248c53a7e4f4b0eb057e0872f66aaf5e45f43cb3cf70ecc22a6bf0a9562c78c4e98a6",
+    "passwordSalt": "openfmr-salt-2024",
+    "password": "openfmr-client"
+  }
+]

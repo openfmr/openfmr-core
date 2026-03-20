@@ -1,0 +1,161 @@
+# =============================================================================
+# OpenFMR Core — Docker Compose Stack
+# =============================================================================
+# This file defines the foundational infrastructure for the OpenFMR Health
+# Information Exchange (HIE). It provisions Jembi's OpenHIM as the central
+# API gateway, routing engine, and network mediator. Clinical modules (Client
+# Registry, Facility Registry, SHR, etc.) attach to the shared network
+# defined here — they are NOT part of this repository.
+#
+# Usage:
+#   cp .env.example .env      # Configure credentials & ports
+#   docker compose up -d       # Start all services
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # MongoDB — Datastore for OpenHIM Core
+  # ---------------------------------------------------------------------------
+  # Stores channel definitions, transaction logs, client credentials, and all
+  # OpenHIM metadata. Data is persisted to a named volume so it survives
+  # container restarts.
+  # ---------------------------------------------------------------------------
+  openhim-mongo:
+    image: mongo:4.4
+    container_name: openfmr-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-openfmr}
+    volumes:
+      - openhim-mongo-data:/data/db
+    networks:
+      - openfmr_global_net
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ---------------------------------------------------------------------------
+  # OpenHIM Core — API Gateway & Routing Engine
+  # ---------------------------------------------------------------------------
+  # The heart of the HIE. All FHIR traffic flows through OpenHIM Core, which
+  # handles authentication, channel-based routing, request/response logging,
+  # and mediator orchestration.
+  #
+  # Ports:
+  #   8080  — HTTP  (inbound FHIR traffic from clients)
+  #   5001  — HTTPS (inbound FHIR traffic, TLS-terminated)
+  #   5000  — OpenHIM Admin API (used by Console & setup scripts)
+  # ---------------------------------------------------------------------------
+  openhim-core:
+    image: jembi/openhim-core:latest
+    container_name: openfmr-openhim-core
+    restart: unless-stopped
+    depends_on:
+      openhim-mongo:
+        condition: service_healthy
+    environment:
+      # MongoDB connection — must match the credentials above
+      - mongo_url=mongodb://${MONGO_USERNAME:-root}:${MONGO_PASSWORD:-openfmr}@openhim-mongo:27017/openhim?authSource=admin
+      - mongo_atnaUrl=mongodb://${MONGO_USERNAME:-root}:${MONGO_PASSWORD:-openfmr}@openhim-mongo:27017/openhim?authSource=admin
+      # API authentication
+      - api_authenticationTypes=["token", "basic"]
+    ports:
+      - "${OPENHIM_HTTP_PORT:-8080}:5001"
+      - "${OPENHIM_HTTPS_PORT:-5001}:5000"
+      - "${OPENHIM_API_PORT:-5000}:8080"
+    networks:
+      - openfmr_global_net
+    healthcheck:
+      test: ["CMD", "curl", "-sSk", "https://localhost:8080/heartbeat"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # OpenHIM Console — Web-Based Admin Dashboard
+  # ---------------------------------------------------------------------------
+  # A single-page AngularJS app that connects to the OpenHIM Core API to
+  # provide a visual management interface for channels, clients, transactions,
+  # and mediators.
+  # ---------------------------------------------------------------------------
+  openhim-console:
+    image: jembi/openhim-console:latest
+    container_name: openfmr-openhim-console
+    restart: unless-stopped
+    ports:
+      - "${OPENHIM_CONSOLE_PORT:-80}:80"
+    networks:
+      - openfmr_global_net
+    healthcheck:
+      test: ["CMD", "curl", "-sS", "http://localhost:80"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # OpenHIM Setup — One-Shot Configuration Seeder
+  # ---------------------------------------------------------------------------
+  # An ephemeral init container that:
+  #   1. Waits for the OpenHIM Core API to become reachable.
+  #   2. Authenticates with the default root credentials.
+  #   3. POSTs channel and client definitions from config/*.json.
+  #   4. Exits with code 0 on success.
+  #
+  # This container does NOT run persistently.
+  # ---------------------------------------------------------------------------
+  openhim-setup:
+    image: alpine:3.19
+    container_name: openfmr-openhim-setup
+    depends_on:
+      openhim-core:
+        condition: service_healthy
+    environment:
+      - OPENHIM_API_URL=https://openhim-core:8080
+      - OPENHIM_ROOT_EMAIL=${OPENHIM_ROOT_EMAIL:-root@openhim.org}
+      - OPENHIM_ROOT_PASSWORD=${OPENHIM_ROOT_PASSWORD:-openhim-password}
+    volumes:
+      - ./scripts:/scripts:ro
+      - ./config:/config:ro
+    networks:
+      - openfmr_global_net
+    # Install curl + bash, then run the bootstrap pipeline
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        apk add --no-cache bash curl &&
+        chmod +x /scripts/*.sh &&
+        bash /scripts/wait-for-it.sh openhim-core 8080 --timeout=120 &&
+        bash /scripts/init-openhim.sh
+    restart: "no"
+
+# =============================================================================
+# Volumes — Persistent storage
+# =============================================================================
+volumes:
+  openhim-mongo-data:
+    driver: local
+
+# =============================================================================
+# Networks
+# =============================================================================
+# openfmr_global_net is the backbone of the entire OpenFMR platform. Every
+# module (Client Registry, Facility Registry, SHR, etc.) that needs to
+# communicate with the central gateway MUST attach to this external network.
+#
+# For standalone modules, reference it in their docker-compose.yml as:
+#
+#   networks:
+#     openfmr_global_net:
+#       external: true
+# =============================================================================
+networks:
+  openfmr_global_net:
+    driver: bridge
+    name: openfmr_global_net

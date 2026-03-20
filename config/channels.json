@@ -1,0 +1,82 @@
+[
+  {
+    "name": "FHIR Patient — Client Registry",
+    "description": "Routes all FHIR Patient requests to the Client Registry (CR) module. The CR is responsible for patient demographics, identity matching (MPI), and golden-record management.",
+    "urlPattern": "^/fhir/Patient.*$",
+    "type": "http",
+    "methods": ["GET", "POST", "PUT", "DELETE"],
+    "authType": "private",
+    "matchContentTypes": [],
+    "allow": ["internal-emr"],
+    "routes": [
+      {
+        "name": "Client Registry FHIR Server",
+        "host": "cr-fhir-server",
+        "port": 8080,
+        "path": "",
+        "pathTransform": "",
+        "primary": true,
+        "type": "http",
+        "secured": false
+      }
+    ],
+    "requestBody": true,
+    "rewriteUrls": true,
+    "status": "enabled",
+    "alerts": [],
+    "txViewAcl": [],
+    "txViewFullAcl": [],
+    "txRerunAcl": [],
+    "properties": [],
+    "matchContentRegex": null,
+    "matchContentXpath": null,
+    "matchContentJson": null,
+    "matchContentValue": null,
+    "pollingSchedule": null,
+    "tcpHost": null,
+    "tcpPort": null,
+    "autoRetryEnabled": false,
+    "autoRetryPeriodMinutes": 60,
+    "autoRetryMaxAttempts": 0
+  },
+  {
+    "name": "FHIR Location — Facility Registry",
+    "description": "Routes FHIR Location requests to the Facility Registry (FR) module, which manages healthcare facility master data conforming to the mCSD profile.",
+    "urlPattern": "^/fhir/Location.*$",
+    "type": "http",
+    "methods": ["GET", "POST", "PUT", "DELETE"],
+    "authType": "private",
+    "matchContentTypes": [],
+    "allow": ["internal-emr"],
+    "routes": [
+      {
+        "name": "Facility Registry FHIR Server",
+        "host": "fr-fhir-server",
+        "port": 8080,
+        "path": "",
+        "pathTransform": "",
+        "primary": true,
+        "type": "http",
+        "secured": false
+      }
+    ],
+    "requestBody": true,
+    "rewriteUrls": true,
+    "status": "enabled",
+    "alerts": [],
+    "txViewAcl": [],
+    "txViewFullAcl": [],
+    "txRerunAcl": [],
+    "properties": [],
+    "matchContentRegex": null,
+    "matchContentXpath": null,
+    "matchContentJson": null,
+    "matchContentValue": null,
+    "pollingSchedule": null,
+    "tcpHost": null,
+    "tcpPort": null,
+    "autoRetryEnabled": false,
+    "autoRetryPeriodMinutes": 60,
+    "autoRetryMaxAttempts": 0
+  }
+]
