@@ -1,0 +1,141 @@
+{
+  "realm": "openfmr",
+  "enabled": true,
+  "displayName": "OpenFMR Health Information Exchange",
+  "displayNameHtml": "<strong>OpenFMR</strong> Health Information Exchange",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 5,
+  "roles": {
+    "realm": [
+      {
+        "name": "doctor",
+        "description": "Licensed medical practitioner — can read and write clinical records."
+      },
+      {
+        "name": "nurse",
+        "description": "Nursing staff — can read clinical records and update observations."
+      },
+      {
+        "name": "admin",
+        "description": "System administrator — full platform management access."
+      },
+      {
+        "name": "data_steward",
+        "description": "Data steward — can review and resolve conflict records in the Admin UI."
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "openfmr-smart-client",
+      "name": "OpenFMR SMART Client",
+      "description": "Public OIDC client configured for SMART-on-FHIR authorization flows. Used by EMR applications and clinical frontends to obtain OAuth 2.0 access tokens.",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "protocol": "openid-connect",
+      "rootUrl": "http://localhost",
+      "baseUrl": "/",
+      "redirectUris": [
+        "http://localhost/*",
+        "http://localhost:8080/*",
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": ["*"],
+      "defaultClientScopes": [
+        "openid",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "offline_access",
+        "roles"
+      ],
+      "attributes": {
+        "oauth2.device.authorization.grant.enabled": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "post.logout.redirect.uris": "http://localhost/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "dr.sharma",
+      "email": "dr.sharma@openfmr.example",
+      "firstName": "Ankit",
+      "lastName": "Sharma",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["doctor"]
+    },
+    {
+      "username": "nurse.acharya",
+      "email": "nurse.acharya@openfmr.example",
+      "firstName": "Sita",
+      "lastName": "Acharya",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["nurse"]
+    },
+    {
+      "username": "admin.user",
+      "email": "admin@openfmr.example",
+      "firstName": "Admin",
+      "lastName": "User",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["admin"]
+    }
+  ],
+  "scopeMappings": [],
+  "clientScopeMappings": {},
+  "defaultDefaultClientScopes": [
+    "openid",
+    "profile",
+    "email",
+    "roles",
+    "web-origins",
+    "acr"
+  ],
+  "defaultOptionalClientScopes": [
+    "offline_access",
+    "address",
+    "phone",
+    "microprofile-jwt"
+  ]
+}

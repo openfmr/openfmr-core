@@ -11,23 +11,29 @@ OpenFMR Core provides the central **API Gateway**, **routing engine**, and **net
 ## 📦 Architecture Overview
 
 ```
-┌────────────────────────────────────────────────────────────────────┐
-│                        openfmr_global_net                         │
-│                    (Docker Bridge Network)                        │
-│                                                                    │
-│  ┌──────────────┐   ┌──────────────────┐   ┌──────────────────┐  │
-│  │  OpenHIM     │   │  OpenHIM Core     │   │  OpenHIM         │  │
-│  │  Console     │──▶│  (API Gateway)    │──▶│  MongoDB         │  │
-│  │  :80         │   │  :8080 :5001 :5000│   │  :27017          │  │
-│  └──────────────┘   └────────┬─────────┘   └──────────────────┘  │
-│                              │                                     │
-│              ┌───────────────┼───────────────┐                    │
-│              ▼               ▼               ▼                    │
-│    ┌─────────────┐  ┌──────────────┐  ┌──────────────┐           │
-│    │ CR Module   │  │ FR Module    │  │ SHR Module   │           │
-│    │ (external)  │  │ (external)   │  │ (external)   │           │
-│    └─────────────┘  └──────────────┘  └──────────────┘           │
-└────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                          openfmr_global_net                              │
+│                      (Docker Bridge Network)                            │
+│                                                                          │
+│  ┌──────────────┐   ┌──────────────────┐   ┌──────────────────┐         │
+│  │  OpenHIM     │   │  OpenHIM Core     │   │  OpenHIM         │         │
+│  │  Console     │──▶│  (API Gateway)    │──▶│  MongoDB         │         │
+│  │  :80         │   │  :8080 :5001 :5000│   │  :27017          │         │
+│  └──────────────┘   └────────┬─────────┘   └──────────────────┘         │
+│                              │                                           │
+│  ┌──────────────────┐        │         ┌──────────────────┐              │
+│  │  Keycloak (IdP)  │        │         │  Keycloak        │              │
+│  │  :8180           │◀── ── ─┤         │  PostgreSQL      │              │
+│  │  OAuth 2.0 / OIDC│        │         │  :5432           │              │
+│  └──────────────────┘        │         └──────────────────┘              │
+│                              │                                           │
+│              ┌───────────────┼───────────────┐                          │
+│              ▼               ▼               ▼                          │
+│    ┌─────────────┐  ┌──────────────┐  ┌──────────────┐                  │
+│    │ CR Module   │  │ FR Module    │  │ SHR Module   │                  │
+│    │ (external)  │  │ (external)   │  │ (external)   │                  │
+│    └─────────────┘  └──────────────┘  └──────────────┘                  │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Services
@@ -38,6 +44,8 @@ OpenFMR Core provides the central **API Gateway**, **routing engine**, and **net
 | `openhim-core` | `jembi/openhim-core:latest` | 8080, 5001, 5000 | API Gateway & transaction router |
 | `openhim-console` | `jembi/openhim-console:latest` | 80 | Web-based admin dashboard |
 | `openhim-setup` | `alpine:3.19` | — | One-shot config seeder (exits after run) |
+| `keycloak-db` | `postgres:16-alpine` | 5432 (internal) | Persistent datastore for Keycloak |
+| `keycloak` | `quay.io/keycloak/keycloak:24.0` | 8180 | Identity Provider — OAuth 2.0 / OIDC |
 
 ---
 
@@ -135,10 +143,69 @@ openfmr-core/
 ├── README.md                # This file
 ├── config/
 │   ├── channels.json        # OpenHIM channel (routing) definitions
-│   └── clients.json         # OpenHIM client (auth) definitions
+│   ├── clients.json         # OpenHIM client (auth) definitions
+│   └── keycloak-realm.json  # Keycloak realm, roles, clients & dev users
 └── scripts/
     ├── wait-for-it.sh       # TCP readiness checker
     └── init-openhim.sh      # API bootstrapper & config seeder
+```
+
+---
+
+## 🔐 Keycloak (Identity Provider)
+
+Keycloak provides **OAuth 2.0 / OpenID Connect** token issuance, user management, and role-based access control. It is the authorization server required for SMART-on-FHIR flows.
+
+### Accessing the Keycloak Admin Console
+
+Open [http://localhost:8180](http://localhost:8180) after starting the stack.
+
+**Default admin credentials:**
+| Field | Value |
+|-------|-------|
+| Username | `admin` |
+| Password | `admin` |
+
+### Pre-configured Realm: `openfmr`
+
+On first startup, Keycloak auto-imports the `openfmr` realm from `config/keycloak-realm.json`. This realm includes:
+
+**Roles:**
+| Role | Description |
+|------|-------------|
+| `doctor` | Licensed medical practitioner — read/write clinical records |
+| `nurse` | Nursing staff — read clinical records and update observations |
+| `admin` | System administrator — full platform management access |
+| `data_steward` | Data steward — review and resolve conflict records |
+
+**OIDC Client:** `openfmr-smart-client` (public client, Authorization Code + Direct Access Grants)
+
+**Sample Dev Users:**
+| Username | Role | Password |
+|----------|------|----------|
+| `dr.sharma` | `doctor` | `password` |
+| `nurse.acharya` | `nurse` | `password` |
+| `admin.user` | `admin` | `password` |
+
+> ⚠️ These credentials are for **local development only**. Change all passwords before deploying to staging or production.
+
+### Token Endpoints
+
+| Endpoint | URL |
+|----------|-----|
+| Token | `http://localhost:8180/realms/openfmr/protocol/openid-connect/token` |
+| Authorization | `http://localhost:8180/realms/openfmr/protocol/openid-connect/auth` |
+| UserInfo | `http://localhost:8180/realms/openfmr/protocol/openid-connect/userinfo` |
+| JWKS | `http://localhost:8180/realms/openfmr/protocol/openid-connect/certs` |
+
+### Quick Token Test
+
+```bash
+curl -X POST http://localhost:8180/realms/openfmr/protocol/openid-connect/token \
+  -d "client_id=openfmr-smart-client" \
+  -d "grant_type=password" \
+  -d "username=dr.sharma" \
+  -d "password=password"
 ```
 
 ---
