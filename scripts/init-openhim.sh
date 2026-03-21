@@ -39,10 +39,10 @@ EXIT_CODE=0
 # =============================================================================
 
 # ---- Logging helpers --------------------------------------------------------
-info()  { echo "[init-openhim] ℹ $*"; }
-ok()    { echo "[init-openhim] ✓ $*"; }
-warn()  { echo "[init-openhim] ⚠ $*"; }
-fail()  { echo "[init-openhim] ✗ $*"; EXIT_CODE=1; }
+info()  { echo "[init-openhim] ℹ $*" >&2; }
+ok()    { echo "[init-openhim] ✓ $*" >&2; }
+warn()  { echo "[init-openhim] ⚠ $*" >&2; }
+fail()  { echo "[init-openhim] ✗ $*" >&2; EXIT_CODE=1; }
 
 # ---- authenticate -----------------------------------------------------------
 # OpenHIM uses a custom HTTPS API. For initial bootstrapping, we rely on
@@ -51,8 +51,6 @@ fail()  { echo "[init-openhim] ✗ $*"; EXIT_CODE=1; }
 # Returns the HTTP status code of the heartbeat check.
 # -----------------------------------------------------------------------------
 check_api_health() {
-  info "Checking OpenHIM API health at ${API_URL}..."
-
   local status
   status=$(curl ${CURL_OPTS} -o /dev/null -w "%{http_code}" \
     --user "${EMAIL}:${PASSWORD}" \

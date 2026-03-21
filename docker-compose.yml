@@ -117,7 +117,7 @@ services:
         condition: service_healthy
     environment:
       - OPENHIM_API_URL=https://openhim-core:8080
-      - OPENHIM_ROOT_EMAIL=${OPENHIM_ROOT_EMAIL:-root@openhim.org}
+      - OPENHIM_ROOT_EMAIL=${OPENHIM_ROOT_USER:-root@openhim.org}
       - OPENHIM_ROOT_PASSWORD=${OPENHIM_ROOT_PASSWORD:-openhim-password}
     volumes:
       - ./scripts:/scripts:ro
@@ -130,7 +130,6 @@ services:
       - -c
       - |
         apk add --no-cache bash curl &&
-        chmod +x /scripts/*.sh &&
         bash /scripts/wait-for-it.sh openhim-core 8080 --timeout=120 &&
         bash /scripts/init-openhim.sh
     restart: "no"

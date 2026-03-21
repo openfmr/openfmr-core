@@ -53,7 +53,8 @@
       "redirectUris": [
         "http://localhost/*",
         "http://localhost:8080/*",
-        "http://localhost:3000/*"
+        "http://localhost:3000/*",
+        "http://localhost:3001/*"
       ],
       "webOrigins": ["*"],
       "defaultClientScopes": [
@@ -63,13 +64,78 @@
       ],
       "optionalClientScopes": [
         "offline_access",
-        "roles"
+        "roles",
+        "launch",
+        "fhirUser",
+        "patient/*.read",
+        "patient/*.write",
+        "launch/patient",
+        "user/Patient.read",
+        "user/Patient.write",
+        "user/Encounter.write",
+        "user/Claim.read"
       ],
       "attributes": {
         "oauth2.device.authorization.grant.enabled": "false",
         "oidc.ciba.grant.enabled": "false",
         "post.logout.redirect.uris": "http://localhost/*"
       }
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "launch",
+      "description": "SMART on FHIR launch scope",
+      "protocol": "openid-connect",
+      "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}
+    },
+    {
+      "name": "fhirUser",
+      "description": "Access to the logged-in user's FHIR resource",
+      "protocol": "openid-connect",
+      "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}
+    },
+    {
+      "name": "patient/*.read",
+      "description": "Read access to all FHIR resources in patient context",
+      "protocol": "openid-connect",
+      "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}
+    },
+    {
+      "name": "patient/*.write",
+      "description": "Write access to all FHIR resources in patient context",
+      "protocol": "openid-connect",
+      "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}
+    },
+    {
+      "name": "launch/patient",
+      "description": "Standalone SMART launch with patient context",
+      "protocol": "openid-connect",
+      "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}
+    },
+    {
+      "name": "user/Patient.read",
+      "description": "Read Patient resources as user",
+      "protocol": "openid-connect",
+      "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}
+    },
+    {
+      "name": "user/Patient.write",
+      "description": "Write Patient resources as user",
+      "protocol": "openid-connect",
+      "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}
+    },
+    {
+      "name": "user/Encounter.write",
+      "description": "Write Encounter resources as user",
+      "protocol": "openid-connect",
+      "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}
+    },
+    {
+      "name": "user/Claim.read",
+      "description": "Read Claim resources as user",
+      "protocol": "openid-connect",
+      "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}
     }
   ],
   "users": [

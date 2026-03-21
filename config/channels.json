@@ -78,5 +78,30 @@
     "autoRetryEnabled": false,
     "autoRetryPeriodMinutes": 60,
     "autoRetryMaxAttempts": 0
+  },
+  {
+    "name": "FHIR Metadata & Discovery",
+    "description": "Public channel for FHIR metadata and SMART-on-FHIR configuration discovery. This is required for clients to discovery the OAuth2 endpoints.",
+    "urlPattern": "^/fhir/(\\.well-known/smart-configuration|metadata)$",
+    "type": "http",
+    "methods": ["GET"],
+    "authType": "public",
+    "matchContentTypes": [],
+    "allow": [],
+    "routes": [
+      {
+        "name": "Client Registry FHIR Server",
+        "host": "cr-fhir-server",
+        "port": 8080,
+        "path": "",
+        "pathTransform": "",
+        "primary": true,
+        "type": "http",
+        "secured": false
+      }
+    ],
+    "requestBody": true,
+    "rewriteUrls": true,
+    "status": "enabled"
   }
 ]
