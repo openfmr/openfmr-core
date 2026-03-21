@@ -101,7 +101,22 @@
       "attributes": {
         "include.in.token.scope": "true",
         "display.on.consent.screen": "false"
-      }
+      },
+      "protocolMappers": [
+        {
+          "name": "fhirUser mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "fhirUser",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "fhirUser",
+            "jsonType.label": "String"
+          }
+        }
+      ]
     },
     {
       "name": "patient/*.read",
@@ -619,7 +634,12 @@
       ],
       "realmRoles": [
         "doctor"
-      ]
+      ],
+      "attributes": {
+        "fhirUser": [
+          "Practitioner/dr-sharma"
+        ]
+      }
     },
     {
       "username": "nurse.acharya",
@@ -637,7 +657,12 @@
       ],
       "realmRoles": [
         "nurse"
-      ]
+      ],
+      "attributes": {
+        "fhirUser": [
+          "Practitioner/nurse-acharya"
+        ]
+      }
     },
     {
       "username": "admin.user",
@@ -655,7 +680,12 @@
       ],
       "realmRoles": [
         "admin"
-      ]
+      ],
+      "attributes": {
+        "fhirUser": [
+          "Practitioner/admin-user"
+        ]
+      }
     }
   ],
   "scopeMappings": [],

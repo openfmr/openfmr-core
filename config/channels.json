@@ -103,5 +103,30 @@
     "requestBody": true,
     "rewriteUrls": true,
     "status": "enabled"
+  },
+  {
+    "name": "FHIR Health Worker Registry",
+    "description": "Routes FHIR Practitioner requests to the Health Worker Registry (HWR) module.",
+    "urlPattern": "^/fhir/Practitioner.*$",
+    "type": "http",
+    "methods": ["GET", "POST", "PUT", "DELETE"],
+    "authType": "private",
+    "matchContentTypes": [],
+    "allow": ["internal-emr"],
+    "routes": [
+      {
+        "name": "Health Worker Registry FHIR Server",
+        "host": "hwr-fhir-server",
+        "port": 8080,
+        "path": "",
+        "pathTransform": "",
+        "primary": true,
+        "type": "http",
+        "secured": false
+      }
+    ],
+    "requestBody": true,
+    "rewriteUrls": true,
+    "status": "enabled"
   }
 ]
