@@ -62,13 +62,13 @@
       "defaultClientScopes": [
         "openid",
         "profile",
-        "email"
+        "email",
+        "fhirUser"
       ],
       "optionalClientScopes": [
         "offline_access",
         "roles",
         "launch",
-        "fhirUser",
         "patient/*.read",
         "patient/*.write",
         "launch/patient",
